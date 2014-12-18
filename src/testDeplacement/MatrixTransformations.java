@@ -39,57 +39,44 @@ public class MatrixTransformations {
 		Calib3d.Rodrigues(rotationVector, rotationMatrix);
 
 		// Construction de la matrice de passage
-		Mat extrinsicParametersMatrix = new Mat(3, 4, CvType.CV_32F);
-		extrinsicParametersMatrix.put(0, 0, rotationMatrix.get(0, 0)[0]);
-		extrinsicParametersMatrix.put(0, 1, rotationMatrix.get(0, 1)[0]);
-		extrinsicParametersMatrix.put(0, 2, rotationMatrix.get(0, 2)[0]);
-		extrinsicParametersMatrix.put(0, 3, translationVector.get(0, 0)[0]);
-		extrinsicParametersMatrix.put(1, 0, rotationMatrix.get(1, 0)[0]);
-		extrinsicParametersMatrix.put(1, 1, rotationMatrix.get(1, 1)[0]);
-		extrinsicParametersMatrix.put(1, 2, rotationMatrix.get(1, 2)[0]);
-		extrinsicParametersMatrix.put(1, 3, translationVector.get(1, 0)[0]);
-		extrinsicParametersMatrix.put(2, 0, rotationMatrix.get(2, 0)[0]);
-		extrinsicParametersMatrix.put(2, 1, rotationMatrix.get(2, 1)[0]);
-		extrinsicParametersMatrix.put(2, 2, rotationMatrix.get(2, 2)[0]);
-		extrinsicParametersMatrix.put(2, 3, translationVector.get(2, 0)[0]);
-
 		Mat cameraTranslationVector = new Mat(3, 1, CvType.CV_32F);
 		Core.gemm(rotationMatrix.inv(), translationVector, 1, new Mat(), 0, cameraTranslationVector, 0);
 
-		roll = (float) (roll * Math.PI / 180.0);
+		// Construction de la matrice de rotation qui correspond à la rotation que fait l'appareil autours de son axe x
+		roll = degreeToRadian(roll);
+		Mat cameraRotationMatrixAroundX = new Mat(3, 3, CvType.CV_32F);
+		cameraRotationMatrixAroundX.put(0, 0, 1);
+		cameraRotationMatrixAroundX.put(0, 1, 0);
+		cameraRotationMatrixAroundX.put(0, 2, 0);
+		cameraRotationMatrixAroundX.put(1, 0, 0);
+		cameraRotationMatrixAroundX.put(1, 1, Math.cos(roll));
+		cameraRotationMatrixAroundX.put(1, 2, -Math.sin(roll));
+		cameraRotationMatrixAroundX.put(2, 0, 0);
+		cameraRotationMatrixAroundX.put(2, 1, Math.sin(roll));
+		cameraRotationMatrixAroundX.put(2, 2, Math.cos(roll));
 
-		Mat MrcamX = new Mat(3, 3, CvType.CV_32F);
-		MrcamX.put(0, 0, 1);
-		MrcamX.put(0, 1, 0);
-		MrcamX.put(0, 2, 0);
-		MrcamX.put(1, 0, 0);
-		MrcamX.put(1, 1, Math.cos(roll));
-		MrcamX.put(1, 2, -Math.sin(roll));
-		MrcamX.put(2, 0, 0);
-		MrcamX.put(2, 1, Math.sin(roll));
-		MrcamX.put(2, 2, Math.cos(roll));
+		// Construction de la matrice de rotation qui correspond à la rotation que fait l'appareil autours de son axe y
+		pitch = degreeToRadian(pitch);
+		Mat cameraRotationMatrixAroundY = new Mat(3, 3, CvType.CV_32F);
+		cameraRotationMatrixAroundY.put(0, 0, Math.cos(pitch));
+		cameraRotationMatrixAroundY.put(0, 1, 0);
+		cameraRotationMatrixAroundY.put(0, 2, Math.sin(pitch));
+		cameraRotationMatrixAroundY.put(1, 0, 0);
+		cameraRotationMatrixAroundY.put(1, 1, 1);
+		cameraRotationMatrixAroundY.put(1, 2, 0);
+		cameraRotationMatrixAroundY.put(2, 0, -Math.sin(pitch));
+		cameraRotationMatrixAroundY.put(2, 1, 0);
+		cameraRotationMatrixAroundY.put(2, 2, Math.cos(pitch));
 
-		pitch = (float) (pitch * Math.PI / 180.0);
-
-		Mat MrcamY = new Mat(3, 3, CvType.CV_32F);
-		MrcamY.put(0, 0, Math.cos(pitch));
-		MrcamY.put(0, 1, 0);
-		MrcamY.put(0, 2, Math.sin(pitch));
-		MrcamY.put(1, 0, 0);
-		MrcamY.put(1, 1, 1);
-		MrcamY.put(1, 2, 0);
-		MrcamY.put(2, 0, -Math.sin(pitch));
-		MrcamY.put(2, 1, 0);
-		MrcamY.put(2, 2, Math.cos(pitch));
-
-		Mat Mrcam = new Mat(3, 3, CvType.CV_32F);
-		Core.gemm(MrcamX, MrcamY, 1, new Mat(), 0, Mrcam, 0);
+		// Calcul de la matrice de rotation de l'appareil
+		Mat cameraRotationMatrix = new Mat(3, 3, CvType.CV_32F);
+		Core.gemm(cameraRotationMatrixAroundX, cameraRotationMatrixAroundY, 1, new Mat(), 0, cameraRotationMatrix, 0);
 
 		// Rotation du repère appareil dans celui d ela caméra openCV (-PI/2 selon l'axe x)
-		Mrcam = matrixRotationFromX(Mrcam, Math.PI);
+		cameraRotationMatrix = matrixRotationFromX(cameraRotationMatrix, Math.PI);
 
 		Mat Rcam = new Mat(); // Output de Rodrigues
-		Calib3d.Rodrigues(Mrcam, Rcam);
+		Calib3d.Rodrigues(cameraRotationMatrix, Rcam);
 
 		Mat rotationMatrix32F = new Mat(3, 3, CvType.CV_32F);
 		rotationMatrix32F.put(0, 0, rotationMatrix.get(0, 0)[0]);
@@ -103,7 +90,7 @@ public class MatrixTransformations {
 		rotationMatrix32F.put(2, 2, rotationMatrix.get(2, 2)[0]);
 
 		Mat MrcamRotationX = new Mat(3, 3, CvType.CV_32F);
-		Core.gemm(Mrcam, rotationMatrix32F, 1, new Mat(), 0, MrcamRotationX, 0);
+		Core.gemm(cameraRotationMatrix, rotationMatrix32F, 1, new Mat(), 0, MrcamRotationX, 0);
 
 		Mat Xrob = new Mat(3, 1, CvType.CV_32F);
 		Mat unZeroZero = new Mat(3, 1, CvType.CV_32F);
@@ -132,7 +119,7 @@ public class MatrixTransformations {
 			Calib3d.Rodrigues(MRotation, Rrotation);
 
 			Mat MrcamXrotationMatrix = new Mat(3, 3, CvType.CV_32F);
-			Core.gemm(Mrcam, rotationMatrix32F, 1, new Mat(), 0, MrcamXrotationMatrix, 0);
+			Core.gemm(cameraRotationMatrix, rotationMatrix32F, 1, new Mat(), 0, MrcamXrotationMatrix, 0);
 
 			Mat MRotationMrcamXrotationMatrix = new Mat(3, 3, CvType.CV_32F);
 			Core.gemm(MRotation, MrcamXrotationMatrix, 1, new Mat(), 0, MRotationMrcamXrotationMatrix, 0);
@@ -155,9 +142,9 @@ public class MatrixTransformations {
 				MRotationFinale.put(2, 2, MRotation.get(2, 2)[0]);
 			}
 		}
-		Core.gemm(Mrcam, MRotationFinale, 1, new Mat(), 0, Mrcam, 0);
+		Core.gemm(cameraRotationMatrix, MRotationFinale, 1, new Mat(), 0, cameraRotationMatrix, 0);
 
-		Calib3d.Rodrigues(Mrcam, Rcam);
+		Calib3d.Rodrigues(cameraRotationMatrix, Rcam);
 		MatOfPoint3f zeroZeroZero = new MatOfPoint3f(new Point3(0, 0, 0));
 		MatOfPoint2f centre = new MatOfPoint2f();
 		Calib3d.projectPoints(zeroZeroZero, Rcam, translationVector, intrinsicParametersMatrix, distortionCoefficients, centre);
@@ -171,7 +158,7 @@ public class MatrixTransformations {
 		Core.gemm(intrinsicParametersMatrix.inv(), centerMatrix, 1, new Mat(), 0, Ntvec, 0);
 		double indice = Math.sqrt(cameraTranslationVector.get(0, 0)[0] * cameraTranslationVector.get(0, 0)[0] + cameraTranslationVector.get(1, 0)[0] * cameraTranslationVector.get(1, 0)[0] + cameraTranslationVector.get(2, 0)[0] * cameraTranslationVector.get(2, 0)[0]);
 		Core.multiply(Ntvec, new Scalar(indice), Ntvec);
-		Core.gemm(Mrcam.inv(), Ntvec, 1, new Mat(), 0, cameraTranslationVector, 0);
+		Core.gemm(cameraRotationMatrix.inv(), Ntvec, 1, new Mat(), 0, cameraTranslationVector, 0);
 
 		MatOfPoint2f VX = new MatOfPoint2f();
 		Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0.58, 0, 0)), Rcam, Ntvec, intrinsicParametersMatrix, distortionCoefficients, VX);
@@ -186,12 +173,12 @@ public class MatrixTransformations {
 
 		MatOfPoint2f PointsCaptes = new MatOfPoint2f();
 		Calib3d.projectPoints(objectPoints, rotationVector, translationVector, intrinsicParametersMatrix, distortionCoefficients, PointsCaptes);
-		
+
 		for (Point p : PointsCaptes.toArray()) {
 			Core.circle(image, p, 20, new Scalar(255, 0, 0));
 		}
 
-		MatrixTransformations.MrcamX = Mrcam;
+		MatrixTransformations.MrcamX = cameraRotationMatrix;
 		MatrixTransformations.cameraMatrix = intrinsicParametersMatrix;
 		MatrixTransformations.cameraTranslationVector = cameraTranslationVector;
 	}
@@ -216,28 +203,31 @@ public class MatrixTransformations {
 		return matrix;
 	}
 
+	private static float degreeToRadian(double degreeAngle) {
+		return (float) (degreeAngle * Math.PI / 180.0);
+	}
+
 	private static Mat MrcamX;
 	private static Mat cameraMatrix;
 	private static Mat cameraTranslationVector;
 
 	public static Point3 detect(Mat image, Point toDetect) throws Exception {
-		
+
 		if (image == null || toDetect == null)
 			throw new Exception("VNC ERROR : Null parameter in detection.");
-		
+
 		if (MrcamX == null || cameraMatrix == null || cameraTranslationVector == null)
 			throw new Exception("VNC ERROR : the matrix was not calculated before.");
-		
-		
+
 		Mat touchedPointMatrix = new Mat(3, 1, CvType.CV_32F);
 		touchedPointMatrix.put(0, 0, toDetect.x);
 		touchedPointMatrix.put(1, 0, toDetect.y);
 		touchedPointMatrix.put(2, 0, 1);
-		
+
 		Mat coordonneesClique = new Mat(3, 1, CvType.CV_32F);
 		Core.gemm(cameraMatrix.inv(), touchedPointMatrix, 1, new Mat(), 0, coordonneesClique, 0);
 		Core.gemm(MrcamX.inv(), coordonneesClique, 1, new Mat(), 0, coordonneesClique, 0);
-		
+
 		double t = -cameraTranslationVector.get(2, 0)[0] / coordonneesClique.get(2, 0)[0];
 		double X = -coordonneesClique.get(0, 0)[0] * t - cameraTranslationVector.get(0, 0)[0];
 		double Y = -coordonneesClique.get(1, 0)[0] * t - cameraTranslationVector.get(1, 0)[0];
