@@ -170,8 +170,9 @@ public class MatrixTransformations {
 		Core.gemm(rotationMatrix.inv(), tvec, 1, new Mat(), 0, cameraTranslationVector, 0);
 		// /////////////////////////////////////////////
 		// System.out.println("ROLL = " + roll);
+
 		roll = (float) (roll * Math.PI / 180.0);
-		
+
 		Mat MrcamX = new Mat(3, 3, CvType.CV_32F);
 		MrcamX.put(0, 0, 1);
 		MrcamX.put(0, 1, 0);
@@ -182,23 +183,26 @@ public class MatrixTransformations {
 		MrcamX.put(2, 0, 0);
 		MrcamX.put(2, 1, Math.sin(roll));
 		MrcamX.put(2, 2, Math.cos(roll));
-		
-//		pitch = (float) (pitch * Math.PI / 180.0);
-//		
-//		Mat MrcamY = new Mat(3, 3, CvType.CV_32F);
-//		MrcamY.put(0, 0, Math.cos(pitch));
-//		MrcamY.put(0, 1, 0);
-//		MrcamY.put(0, 2, Math.sin(pitch));
-//		MrcamY.put(1, 0, 0);
-//		MrcamY.put(1, 1, 1);
-//		MrcamY.put(1, 2, 0);
-//		MrcamY.put(2, 0, -Math.sin(pitch));
-//		MrcamY.put(2, 1, 0);
-//		MrcamY.put(2, 2, Math.cos(pitch));
-//		
-//		Mat Mrcam = new Mat(3, 3, CvType.CV_32F);
-//		Core.gemm(MrcamY, MrcamX, 1, new Mat(), 0, Mrcam, 0);
-		Mat Mrcam = MrcamX;
+
+		pitch = (float) (pitch * Math.PI / 180.0);
+
+		Mat MrcamY = new Mat(3, 3, CvType.CV_32F);
+		MrcamY.put(0, 0, Math.cos(pitch));
+		MrcamY.put(0, 1, 0);
+		MrcamY.put(0, 2, Math.sin(pitch));
+		MrcamY.put(1, 0, 0);
+		MrcamY.put(1, 1, 1);
+		MrcamY.put(1, 2, 0);
+		MrcamY.put(2, 0, -Math.sin(pitch));
+		MrcamY.put(2, 1, 0);
+		MrcamY.put(2, 2, Math.cos(pitch));
+
+		Mat Mrcam = new Mat(3, 3, CvType.CV_32F);
+		Core.gemm(MrcamX, MrcamY, 1, new Mat(), 0, Mrcam, 0);
+
+		// Rotation du repère appareil dans celui d ela caméra openCV (-PI/2 selon l'axe x)
+		Mrcam = matrixRotationFromX(Mrcam, Math.PI);
+
 		Mat Rcam = new Mat(); // Output de Rodrigues
 		Calib3d.Rodrigues(Mrcam, Rcam);
 
@@ -299,8 +303,7 @@ public class MatrixTransformations {
 		Mat Ntvec = new Mat(3, 1, CvType.CV_32F);
 		Core.gemm(cameraMatrix.inv(), centerMatrix, 1, new Mat(), 0, Ntvec, 0);
 		// System.out.println("Ntvec first: " + Ntvec.dump());
-		double indice = Math.sqrt(cameraTranslationVector.get(0, 0)[0] * cameraTranslationVector.get(0, 0)[0] + cameraTranslationVector.get(1, 0)[0] * cameraTranslationVector.get(1, 0)[0]
-				+ cameraTranslationVector.get(2, 0)[0] * cameraTranslationVector.get(2, 0)[0]);
+		double indice = Math.sqrt(cameraTranslationVector.get(0, 0)[0] * cameraTranslationVector.get(0, 0)[0] + cameraTranslationVector.get(1, 0)[0] * cameraTranslationVector.get(1, 0)[0] + cameraTranslationVector.get(2, 0)[0] * cameraTranslationVector.get(2, 0)[0]);
 		// System.out.println("indice : " + indice);
 		Core.multiply(Ntvec, new Scalar(indice), Ntvec);
 
@@ -343,9 +346,25 @@ public class MatrixTransformations {
 		Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0, 0.58, 0)), Rcam, Ntvec, cameraMatrix, distCoeffs, VY);
 		MatOfPoint2f VZ = new MatOfPoint2f();
 		Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0, 0, 0.58)), Rcam, Ntvec, cameraMatrix, distCoeffs, VZ);
-		Core.line(image, VX.toArray()[0], VX.toArray()[1], new Scalar(255, 0, 0), 2);
-		Core.line(image, VY.toArray()[0], VY.toArray()[1], new Scalar(0, 255, 0), 2);
-		Core.line(image, VZ.toArray()[0], VZ.toArray()[1], new Scalar(0, 0, 255), 2);
+
+		// ///////////////////////////////
+		// Mat matrixTEST = new Mat(3, 3, CvType.CV_32F);
+		// matrixTEST.put(0, 0, 0.58); matrixTEST.put(0, 1, 0); matrixTEST.put(0, 2, 0);
+		// matrixTEST.put(1, 0, 0); matrixTEST.put(1, 1, 0.58); matrixTEST.put(1, 2, 0);
+		// matrixTEST.put(2, 0, 0); matrixTEST.put(2, 1, 0); matrixTEST.put(2, 2, 0.58);
+		// Mat matrixRESTEST = matrixRotationFromX(matrixTEST, Math.PI/2);
+		//
+		// MatOfPoint2f VX = new MatOfPoint2f();
+		// Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(matrixRESTEST.get(0, 0)[0], matrixRESTEST.get(0, 1)[0], matrixRESTEST.get(0, 2)[0])), Rcam, Ntvec, cameraMatrix, distCoeffs, VX);
+		// MatOfPoint2f VY = new MatOfPoint2f();
+		// Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(matrixRESTEST.get(1, 0)[0], matrixRESTEST.get(1, 1)[0], matrixRESTEST.get(1, 2)[0])), Rcam, Ntvec, cameraMatrix, distCoeffs, VY);
+		// MatOfPoint2f VZ = new MatOfPoint2f();
+		// Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(matrixRESTEST.get(2, 0)[0], matrixRESTEST.get(2, 1)[0], matrixRESTEST.get(2, 2)[0])), Rcam, Ntvec, cameraMatrix, distCoeffs, VZ);
+		// ///////////////////////////////
+
+		Core.line(image, VX.toArray()[0], VX.toArray()[1], new Scalar(255, 255, 0), 2); // Bleu // Bleu ciel
+		Core.line(image, VY.toArray()[0], VY.toArray()[1], new Scalar(0, 255, 255), 2); // Vert // Jaune
+		Core.line(image, VZ.toArray()[0], VZ.toArray()[1], new Scalar(255, 0, 255), 2); // Rouge // Rose
 
 		MatOfPoint2f PointsCaptes = new MatOfPoint2f();
 		Calib3d.projectPoints(objectPoints, rvec, tvec, cameraMatrix, distCoeffs, PointsCaptes);
@@ -359,6 +378,26 @@ public class MatrixTransformations {
 		// displayMatrix(cameraTranslationVector, "CAMERA TRANSLATION");
 		// return new Point3(X, Y, 0);
 
+	}
+
+	private static Mat matrixRotationFromX(Mat matrix, double angle) {
+
+		// Matrice de rotation
+		Mat rotationMatrixFromXAxis = new Mat(3, 3, CvType.CV_32F);
+		rotationMatrixFromXAxis.put(0, 0, 1);
+		rotationMatrixFromXAxis.put(0, 1, 0);
+		rotationMatrixFromXAxis.put(0, 2, 0);
+		rotationMatrixFromXAxis.put(1, 0, 0);
+		rotationMatrixFromXAxis.put(1, 1, Math.cos(angle));
+		rotationMatrixFromXAxis.put(1, 2, -Math.sin(angle));
+		rotationMatrixFromXAxis.put(2, 0, 0);
+		rotationMatrixFromXAxis.put(2, 1, Math.sin(angle));
+		rotationMatrixFromXAxis.put(2, 2, Math.cos(angle));
+
+		// La matrice matrix reçoit la multiplication de matrix par rotationMatrixFromXAxis
+		Core.gemm(matrix, rotationMatrixFromXAxis, 1, new Mat(), 0, matrix, 0);
+
+		return matrix;
 	}
 
 	private static Mat MrcamX;
@@ -395,16 +434,13 @@ public class MatrixTransformations {
 
 		// Récupération de la focale en pixels
 		// TODO : float focalLength = cameraParameters.getFocalLength();
-		// float focalLengthInPixel =
-		// TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM,
-		// CAMERA_FOCAL_LENGTH*1000, displayMetrics);
+		// float focalLengthInPixel = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, CAMERA_FOCAL_LENGTH*1000, displayMetrics);
 
 		// Coordonnées du centre de l'écran dans notre repère
 		float centreX = (float) ((image.width() - 1) / 2.0f);
 		float centreY = (float) ((image.height() - 1) / 2.0f);
 
-		// Initialisation de la matrice des paramètres intrinsèques à la caméra
-		// et ajout des composants à la matrice
+		// Initialisation de la matrice des paramètres intrinsèques à la caméra et ajout des composants à la matrice
 		Mat intrinsicParametersMatrix = new Mat(3, 3, CvType.CV_32F);
 		intrinsicParametersMatrix.put(0, 0, CAMERA_FOCAL_LENGTH * image.width());
 		intrinsicParametersMatrix.put(0, 1, 0);
@@ -420,9 +456,7 @@ public class MatrixTransformations {
 
 	}
 
-	// protected Mat buildExtrinsicRotationParametersMatrix(SensorManager
-	// mSensorManager) {
-	//
+	// protected Mat buildExtrinsicRotationParametersMatrix(SensorManager mSensorManager) {
 	// // Initialisation du sensor manager
 	// init(mSensorManager);
 	//

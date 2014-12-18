@@ -81,9 +81,9 @@ public class Main {
 
 	public static void loadTest4() {
 		image = Highgui.imread("img/Screenshot_2014-12-15-11-13-40.png");
-		roll = 108.43f;
-		pitch = 179.1f;
-		azimuth = 133.87f;
+		roll = 108.43f-180; // TODO : Mickael envoie du roll + 180
+		pitch = 179.1f-180; // TODO : Mickael envoie du pitch + 180
+		azimuth = 133.87f-180; // TODO : Mickael envoie du azimuth + 180
 		Point3 headP3 = new Point3(-0.009586147964000702, 0.03390171378850937, 0.4526781737804413);
 		Point headP2 = new Point(639, 207);
 		Point3 handLeftP3 = new Point3(0.0346740186214447, 0.13087007403373718, 0.20899218320846558);
