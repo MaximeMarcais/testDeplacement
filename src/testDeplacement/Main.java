@@ -22,12 +22,6 @@ import org.opencv.highgui.Highgui;
 
 public class Main {
 
-	private static Image backgroundImage = null;
-	private static Mat image;
-	private static MatOfPoint3f objectPoints;
-	private static MatOfPoint2f imagePoints;
-	private static float roll, pitch, azimuth;
-
 	public static void loadTest1() {
 		Main.image = Highgui.imread("img/Screenshot_2014-12-09-14-27-21.png");
 		Main.roll = 107.5f;
@@ -109,6 +103,11 @@ public class Main {
 			try {
 				final Frame frame = new JFrame("Test deplacement") {
 
+					/**
+					 *
+					 */
+					private static final long serialVersionUID = 544714257895018142L;
+
 					@Override
 					public void paint(Graphics g) {
 						super.paint(g);
@@ -186,5 +185,15 @@ public class Main {
 		return image;
 
 	}
+
+	private static Image backgroundImage = null;
+
+	private static Mat image;
+
+	private static MatOfPoint3f objectPoints;
+
+	private static MatOfPoint2f imagePoints;
+
+	private static float roll, pitch, azimuth;
 
 }
