@@ -92,6 +92,97 @@ public class Main {
 		Main.imagePoints = new MatOfPoint2f(headP2, handLeftP2, handRightP2, footLeftP2, footRightP2);
 	}
 
+	public static void loadTest5() {
+
+		Main.image = Highgui.imread("img/Screenshot_2015-01-07-09-59-26.png");
+
+		Main.roll = -65f;
+		Main.pitch = 11f;
+
+		final Point3 headP3 = new Point3(-0.009586147964000702, 0.03390171378850937, 0.4526781737804413);
+		final Point3 handLeftP3 = new Point3(0.0346740186214447, 0.13087007403373718, 0.20899218320846558);
+		final Point3 handRightP3 = new Point3(0.04136417806148529, -0.09935460984706879, 0.2295495569705963);
+		final Point3 shoulderLeftP3 = new Point3(-0.011, 0.106, 0.43);
+		final Point3 footRightP3 = new Point3(-0.0029234662652015686, -0.06019705533981323, -1.0371208190917969E-5);
+		Main.objectPoints = new MatOfPoint3f(headP3, handLeftP3, handRightP3, shoulderLeftP3, footRightP3);
+
+		final Point headP2 = new Point(705, 166);
+		final Point handLeftP2 = new Point(741, 348);
+		final Point handRightP2 = new Point(600, 307);
+		final Point shoulderLeftP2 = new Point(686, 290);
+		final Point footRightP2 = new Point(609, 432);
+		Main.imagePoints = new MatOfPoint2f(headP2, handLeftP2, handRightP2, shoulderLeftP2, footRightP2);
+	}
+
+	// PRECISION ++
+	
+	public static void loadTest6() {
+
+		Main.image = Highgui.imread("img/Screenshot_2015-01-07-10-17-57.png");
+
+		Main.roll = -68.89746f;
+		Main.pitch = 12.903547f;
+		final Point p2D0 = new Point(621.0, 186.0);
+		final Point3 p3D0 = new Point3(-0.017337866127490997, 0.017378125339746475, 0.455221563577652);
+		final Point p2D1 = new Point(497.0, 350.0);
+		final Point3 p3D1 = new Point3(0.03804643452167511, -0.10589829087257385, 0.22758351266384125);
+		final Point p2D2 = new Point(666.0, 399.0);
+		final Point3 p3D2 = new Point3(0.0327814519405365, 0.1229027733206749, 0.21722161769866943);
+		final Point p2D3 = new Point(552.0, 214.0);
+		final Point3 p3D3 = new Point3(-0.017007561400532722, -0.07358086109161377, 0.4381466805934906);
+		final Point p2D4 = new Point(510.0, 495.2);
+		final Point3 p3D4 = new Point3(-0.003983132541179657, -0.06754104048013687, -1.004338264465332E-5);
+		Main.objectPoints = new MatOfPoint3f(p3D0, p3D1, p3D2, p3D3, p3D4);
+		Main.imagePoints = new MatOfPoint2f(p2D0, p2D1, p2D2, p2D3, p2D4);
+	}
+
+	public static void loadTest7() {
+
+		Main.image = Highgui.imread("img/Screenshot_2015-01-07-10-23-33.png");
+
+		Main.roll = -66.04201f;
+		Main.pitch = -16.043692f;
+		final Point p2D0 = new Point(795.0, 130.0);
+		final Point3 p3D0 = new Point3(-0.0175936296582222, 0.017584308981895447, 0.45519179105758667);
+		final Point p2D1 = new Point(755.0, 342.0);
+		final Point3 p3D1 = new Point3(0.037866655737161636, -0.10585038363933563, 0.22758346796035767);
+		final Point p2D2 = new Point(939.0, 316.0);
+		final Point3 p3D2 = new Point3(0.1174665, 0.11092513799, 0.2254450023174286);
+		final Point p2D3 = new Point(789.0, 118.0);
+		final Point3 p3D3 = new Point3(-0.01734914258122444, -0.07330982387065887, 0.43815624713897705);
+		final Point p2D4 = new Point(821.0, 474.8);
+		final Point3 p3D4 = new Point3(-0.004014141857624054, -0.06768251955509186, 8.106231689453125E-6);
+		final Point p2D5 = new Point(921.0, 458.4);
+		final Point3 p3D5 = new Point3(-0.00503096729516983, 0.06761455535888672, -0.005265861749649048);
+		final Point p2D6 = new Point(871.0, 466.6);
+		final Point3 p3D6 = new Point3(0.0, 0.0, 0.0);
+		Main.objectPoints = new MatOfPoint3f(p3D0, p3D1, p3D2, p3D3, p3D4, p3D5, p3D6);
+		Main.imagePoints = new MatOfPoint2f(p2D0, p2D1, p2D2, p2D3, p2D4, p2D5, p2D6);
+	}
+
+	// NEW VERSION 1
+	
+	public static void loadTest8() {
+
+		Main.image = Highgui.imread("img/.png");
+
+		
+	}
+	
+	public static void loadTest9() {
+
+		Main.image = Highgui.imread("img/.png");
+
+		
+	}
+	
+	public static void loadTest10() {
+
+		Main.image = Highgui.imread("img/.png");
+
+		
+	}
+	
 	public static void main(String[] args) {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 

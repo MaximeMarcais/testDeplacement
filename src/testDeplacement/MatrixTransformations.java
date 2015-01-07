@@ -21,10 +21,10 @@ public class MatrixTransformations {
 	private final static float CAMERA_FOCAL_LENGTH = 1; // 3.43f; // Exprimée en px
 	private static Mat cameraMatrix; // Matrice des paramètres intrinsèques à l'appareil
 	private static Mat cameraTranslationVector; // Matrice des vecteurs de rotation de l'appareil
-	private static Mat mRCamX;
-	private static Mat rCam;
-	private static Mat nTVec;
-	private static MatOfDouble distortionCoefficients;
+	private static Mat cameraRotationMatrixAroundX; // Matrice de rotation du repère caméra autours de l'axe x
+	private static Mat rotationCamera; // Rotation de la camera
+	private static Mat nTranslationVector; // Vecteur translation
+	private static MatOfDouble distortionCoefficients; // Coefficient de distorsion
 
 	/**
 	 * Construit une matrice constituée des paramètres intrinsèques à la caméra, soit la focale et le centre de l'écran de la caméra.
@@ -104,7 +104,7 @@ public class MatrixTransformations {
 		Core.gemm(rotationMatrix.inv(), translationVector, 1, new Mat(), 0, cameraTranslationVector, 0);
 
 		// Construction de la matrice de rotation qui correspond à la rotation que fait l'appareil autours de son axe x
-		roll = MatrixTransformations.degreeToRadian(roll);
+		roll = (float) Math.toRadians(roll);
 		final Mat cameraRotationMatrixAroundX = new Mat(3, 3, CvType.CV_32F);
 		cameraRotationMatrixAroundX.put(0, 0, 1);
 		cameraRotationMatrixAroundX.put(0, 1, 0);
@@ -117,7 +117,7 @@ public class MatrixTransformations {
 		cameraRotationMatrixAroundX.put(2, 2, Math.cos(roll));
 
 		// Construction de la matrice de rotation qui correspond à la rotation que fait l'appareil autours de son axe y
-		pitch = MatrixTransformations.degreeToRadian(pitch);
+		pitch = (float) Math.toRadians(pitch);
 		final Mat cameraRotationMatrixAroundY = new Mat(3, 3, CvType.CV_32F);
 		cameraRotationMatrixAroundY.put(0, 0, Math.cos(pitch));
 		cameraRotationMatrixAroundY.put(0, 1, 0);
@@ -219,16 +219,16 @@ public class MatrixTransformations {
 		Core.multiply(Ntvec, new Scalar(indice), Ntvec);
 		Core.gemm(cameraRotationMatrix.inv(), Ntvec, 1, new Mat(), 0, cameraTranslationVector, 0);
 
-		// final MatOfPoint2f VX = new MatOfPoint2f();
-		// Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0.58, 0, 0)), Rcam, Ntvec, intrinsicParametersMatrix, distortionCoefficients, VX);
-		// final MatOfPoint2f VY = new MatOfPoint2f();
-		// Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0, 0.58, 0)), Rcam, Ntvec, intrinsicParametersMatrix, distortionCoefficients, VY);
-		// final MatOfPoint2f VZ = new MatOfPoint2f();
-		// Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0, 0, 0.58)), Rcam, Ntvec, intrinsicParametersMatrix, distortionCoefficients, VZ);
+		 final MatOfPoint2f VX = new MatOfPoint2f();
+		 Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0.58, 0, 0)), Rcam, Ntvec, intrinsicParametersMatrix, distortionCoefficients, VX);
+		 final MatOfPoint2f VY = new MatOfPoint2f();
+		 Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0, 0.58, 0)), Rcam, Ntvec, intrinsicParametersMatrix, distortionCoefficients, VY);
+		 final MatOfPoint2f VZ = new MatOfPoint2f();
+		 Calib3d.projectPoints(new MatOfPoint3f(new Point3(0, 0, 0), new Point3(0, 0, 0.58)), Rcam, Ntvec, intrinsicParametersMatrix, distortionCoefficients, VZ);
 
-		// Core.line(imageMatrix, VX.toArray()[0], VX.toArray()[1], new Scalar(255, 255, 0), 2); // Android : Bleu // OpenCV : Bleu ciel
-		// Core.line(imageMatrix, VY.toArray()[0], VY.toArray()[1], new Scalar(0, 255, 255), 2); // Android : Vert // OpenCV : Jaune
-		// Core.line(imageMatrix, VZ.toArray()[0], VZ.toArray()[1], new Scalar(255, 0, 255), 2); // Android : Rouge // OpenCV : Rose
+		 Core.line(imageMatrix, VX.toArray()[0], VX.toArray()[1], new Scalar(255, 255, 0), 2); // Android : Bleu // OpenCV : Bleu ciel
+		 Core.line(imageMatrix, VY.toArray()[0], VY.toArray()[1], new Scalar(0, 255, 255), 2); // Android : Vert // OpenCV : Jaune
+		 Core.line(imageMatrix, VZ.toArray()[0], VZ.toArray()[1], new Scalar(255, 0, 255), 2); // Android : Rouge // OpenCV : Rose
 
 		final MatOfPoint2f PointsCaptes = new MatOfPoint2f();
 		Calib3d.projectPoints(objectPoints, rotationVector, translationVector, intrinsicParametersMatrix, distortionCoefficients, PointsCaptes);
@@ -236,24 +236,12 @@ public class MatrixTransformations {
 		for (final Point p : PointsCaptes.toArray())
 			Core.circle(imageMatrix, p, 20, new Scalar(255, 0, 0));
 
-		MatrixTransformations.mRCamX = cameraRotationMatrix;
+		MatrixTransformations.cameraRotationMatrixAroundX = cameraRotationMatrix;
 		MatrixTransformations.cameraMatrix = intrinsicParametersMatrix;
 		MatrixTransformations.cameraTranslationVector = cameraTranslationVector;
-		MatrixTransformations.rCam = Rcam;
-		MatrixTransformations.nTVec = Ntvec;
+		MatrixTransformations.rotationCamera = Rcam;
+		MatrixTransformations.nTranslationVector = Ntvec;
 		MatrixTransformations.distortionCoefficients = distortionCoefficients;
-	}
-
-	/**
-	 * Transforme un angle en degré en un angle en radian.
-	 *
-	 * @param degreeAngle
-	 *            l'angle en degré.
-	 * @return la valeur de l'angle en radian.
-	 */
-	private static float degreeToRadian(double degreeAngle) {
-
-		return (float) (degreeAngle * Math.PI / 180.0);
 	}
 
 	/**
@@ -266,7 +254,7 @@ public class MatrixTransformations {
 	 */
 	public static Point3 detect(Point pointToDetect) throws Exception {
 
-		if (MatrixTransformations.mRCamX == null || MatrixTransformations.cameraMatrix == null || MatrixTransformations.cameraTranslationVector == null)
+		if (MatrixTransformations.cameraRotationMatrixAroundX == null || MatrixTransformations.cameraMatrix == null || MatrixTransformations.cameraTranslationVector == null)
 			throw new Exception("VNC ERROR : the matrix was not calculated before."); // TODO : Remplacer cette Exception par une exception propre au projet et à cette erreur
 
 		// Initialisation de la matrice de la position du point 2D sélectionné
@@ -278,7 +266,7 @@ public class MatrixTransformations {
 		// Calcul des coordonnées du point cliqué dans le le repère 3D du robot
 		final Mat clickedPointCoordinates = new Mat(3, 1, CvType.CV_32F);
 		Core.gemm(MatrixTransformations.cameraMatrix.inv(), touchedPointMatrix, 1, new Mat(), 0, clickedPointCoordinates, 0);
-		Core.gemm(MatrixTransformations.mRCamX.inv(), clickedPointCoordinates, 1, new Mat(), 0, clickedPointCoordinates, 0);
+		Core.gemm(MatrixTransformations.cameraRotationMatrixAroundX.inv(), clickedPointCoordinates, 1, new Mat(), 0, clickedPointCoordinates, 0);
 
 		final double t = -MatrixTransformations.cameraTranslationVector.get(2, 0)[0] / clickedPointCoordinates.get(2, 0)[0];
 		final double x = -clickedPointCoordinates.get(0, 0)[0] * t - MatrixTransformations.cameraTranslationVector.get(0, 0)[0];
@@ -318,7 +306,7 @@ public class MatrixTransformations {
 	public static Point get2DFrom3D(Point3 point3) {
 
 		final MatOfPoint2f points = new MatOfPoint2f();
-		Calib3d.projectPoints(new MatOfPoint3f(point3), MatrixTransformations.rCam, MatrixTransformations.nTVec, MatrixTransformations.cameraMatrix, MatrixTransformations.distortionCoefficients, points);
+		Calib3d.projectPoints(new MatOfPoint3f(point3), MatrixTransformations.rotationCamera, MatrixTransformations.nTranslationVector, MatrixTransformations.cameraMatrix, MatrixTransformations.distortionCoefficients, points);
 		return points.toArray()[0];
 	}
 
